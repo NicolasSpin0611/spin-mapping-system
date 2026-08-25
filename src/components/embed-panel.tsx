@@ -105,7 +105,7 @@ function LiveFrame({ url, title }: { url: string; title: string }) {
           src={url}
           allowFullScreen
           onLoad={() => setLoaded(true)}
-          className="block h-full min-h-[420px] w-full bg-white"
+          className="block h-full min-h-[600px] w-full bg-white"
         />
       </div>
       <footer className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t px-3 py-1.5 text-xs">
@@ -173,7 +173,7 @@ interface EmptyPanelProps {
 
 export function EmptyPanel({ Icon, title, description, hint, action }: EmptyPanelProps) {
   return (
-    <div className="flex h-full min-h-[420px] flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+    <div className="flex h-full min-h-[900px] flex-col items-center justify-center gap-3 px-6 py-10 text-center">
       <span className="bg-background text-muted-foreground flex size-11 items-center justify-center rounded-full border">
         <Icon className="size-5" aria-hidden />
       </span>

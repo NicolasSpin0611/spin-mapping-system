@@ -73,7 +73,6 @@ export function ComparePage({ componentId, onSelect }: ComparePageProps) {
           />
         ) : (
           <div className="space-y-4">
-            <CoverageSummary components={components} />
             <ComparisonEmptyState onPick={() => components[0] && onSelect(components[0].id)} />
           </div>
         )}

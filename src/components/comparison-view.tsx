@@ -153,8 +153,8 @@ export function ComparisonView({ component, onPrevious, onNext, position }: Comp
         </div>
       ) : null}
 
-      <VariantChecklist component={component} />
-    </div>
+{/*       <VariantChecklist component={component} />
+ */}    </div>
   )
 }
 

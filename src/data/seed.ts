@@ -38,7 +38,7 @@ const drafts: Draft[] = [
     category: 'Data display',
     match: 'exact',
     spinbox: spinbox('Collapsible', 'data-display/collapsible/'),
-    legacy: legacy('Collapsible', '8247-133883'),
+    legacy: legacy('Accordion', '8247-133883'),
     notes:
       'Spinbox calls it Collapsible, the mapping doc labels the Spinbox side "Accordion". Agree on one name before migrating.',
     variants: [
@@ -49,20 +49,12 @@ const drafts: Draft[] = [
     ],
   },
   {
-    id: 'alerts-callouts',
-    title: 'Alerts / Callouts',
+    id: 'Callouts',
+    title: 'Callouts',
     category: 'System feedback',
     match: 'needs-review',
     spinbox: spinbox('Callout', 'system-feedback/callout/'),
-    legacy: {
-      label: 'Callouts (spec document)',
-      url: 'https://docs.google.com/document/d/17APhv3NB53rKvTXDYQiX206jUteW_aHuDngfVukk5yY/edit?tab=t.0',
-      kind: 'google-doc',
-      note:
-        'The mapping doc points to a Google Doc instead of a Figma node, and lists the two links swapped. A Figma node for Callouts still has to be found.',
-    },
-    notes:
-      'Source rows were inverted in the mapping doc: the Spinbox row carried the Google Doc and the Legacy row carried the Spinbox URL. Resolved here to Spinbox Callout vs. the Alerts spec doc — confirm with the design team.',
+    legacy:  noSpinbox('Not available', 'No callout component in Spin legacy.'),
     variants: [
       pair('Informative', 'Info'),
       pair('Success'),
@@ -192,7 +184,7 @@ const drafts: Draft[] = [
   },
   {
     id: 'debit-card',
-    title: 'Debit card',
+    title: 'Debit card (Custom Component from Spinbox Legacy)',
     category: 'Cards',
     match: 'missing-spinbox',
     spinbox: noSpinbox('Not available', 'Does not exist in Spinbox ("No existe").'),
@@ -334,7 +326,7 @@ const drafts: Draft[] = [
   },
   {
     id: 'loaders',
-    title: 'Activity loader & Skeleton / Loaders',
+    title: 'Activity loader / Loaders',
     category: 'Loaders',
     match: 'approximate',
     spinbox: {
@@ -345,6 +337,25 @@ const drafts: Draft[] = [
       extra: [{ label: 'Skeleton', url: `${SPINBOX_ROOT}/loaders/skeleton/` }],
     },
     legacy: legacy('Loaders', '8097-128541'),
+    variants: [
+      pair('ActivityLoader small', 'Spinner small'),
+      pair('ActivityLoader large', 'Spinner large'),
+      pair('Full screen loader', 'Blocking loader'),
+      pair('Skeleton text', 'Skeleton line'),
+      pair('Skeleton block', 'Skeleton card'),
+    ],
+  },
+  {
+    id: 'skeleton',
+    title: 'Skeleton',
+    category: 'Loaders',
+    match: 'missing-legacy',
+    spinbox: {
+      label: 'Skeleton',
+      url: `${SPINBOX_ROOT}/loaders/skeleton/`,
+      kind: 'spinbox-docs',
+    },
+    legacy: noSpinbox('Not available', 'No instructions component in Spin Legacy.'),
     variants: [
       pair('ActivityLoader small', 'Spinner small'),
       pair('ActivityLoader large', 'Spinner large'),
@@ -374,11 +385,7 @@ const drafts: Draft[] = [
     title: 'Notifications',
     category: 'System feedback',
     match: 'approximate',
-    spinbox: spinbox(
-      'Snackbar (closest match)',
-      'system-feedback/snackbar/',
-      'No Notifications component in Spinbox. The mapping doc suggests Snackbar as the nearest equivalent.',
-    ),
+    spinbox: noSpinbox('Not available', 'No Notification component in Spinbox.'),
     legacy: legacy('Notifications', '6402-102350'),
     notes: 'Snackbar also maps to Toast Notification, so one of the two Legacy components still needs a home.',
   },
@@ -411,16 +418,29 @@ const drafts: Draft[] = [
     variants: [pair('Determinate'), pair('Indeterminate'), pair('With label'), pair('Steps', 'Segmented')],
   },
   {
-    id: 'punch-card',
-    title: 'Punch card / Vertical card',
+    id: 'punch-card ',
+    title: 'Punch card (Custom Component from Spinbox Legacy)',
+    category: 'Cards',
+    match: 'approximate',
+    spinbox: noSpinbox(
+      'Not available',
+      'No Punch Card component in Spinbox ("No existe").',
+    ),
+    legacy: legacy('Punch Card', '16474-8530'),
+  },
+  {
+    id: 'vertical-card',
+    title: 'Vertical card',
     category: 'Cards',
     match: 'approximate',
     spinbox: spinbox(
       'VerticalCard (closest match)',
       'cards/verticalcard/',
-      'No Punch Card in Spinbox. The mapping doc points to VerticalCard as the closest existing component.',
     ),
-    legacy: legacy('Punch Card', '16474-8530'),
+    legacy:  noSpinbox(
+      'Not available',
+      'No Vertical Card component in Spin legacy.',
+    ),
   },
   {
     id: 'radio-button',
