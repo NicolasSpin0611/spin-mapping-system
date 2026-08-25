@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight, Code2, Info, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmbedPanel, EmptyPanel } from '@/components/embed-panel'
 import { MatchBadge } from '@/components/status-badge'
-import { VariantChecklist } from '@/components/variant-checklist'
-import { Badge } from '@/components/ui/badge'
+/* import { VariantChecklist } from '@/components/variant-checklist'
+ */import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
