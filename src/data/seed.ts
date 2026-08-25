@@ -1,0 +1,558 @@
+import type { ComponentMapping, MappingDataset, MatchStatus, Source, VariantMapping } from './types'
+
+const SPINBOX_ROOT = 'https://spinbox.tools.genesysprime.mx/mobile/components'
+const LEGACY_FILE = 'https://www.figma.com/design/1NqMpfpvxnhpOf11Bod4Xz/Design-system-Spin'
+
+function spinbox(label: string, path: string, note?: string): Source {
+  return { label, url: `${SPINBOX_ROOT}/${path}`, kind: 'spinbox-docs', note }
+}
+
+function noSpinbox(label: string, note: string): Source {
+  return { label, url: null, kind: 'none', note }
+}
+
+function legacy(label: string, nodeId: string, note?: string): Source {
+  return { label, url: `${LEGACY_FILE}?node-id=${nodeId}`, kind: 'figma', note }
+}
+
+/** Suggested variant pair. Same name on both sides unless the doc says otherwise. */
+function pair(spinboxName: string, legacyName = spinboxName, notes = ''): Omit<VariantMapping, 'id'> {
+  return { spinboxName, legacyName, status: 'pending', notes, suggested: true }
+}
+
+interface Draft {
+  id: string
+  title: string
+  category: string
+  match: MatchStatus
+  spinbox: Source
+  legacy: Source
+  notes?: string
+  variants?: Omit<VariantMapping, 'id'>[]
+}
+
+const drafts: Draft[] = [
+  {
+    id: 'collapsible-accordion',
+    title: 'Collapsible / Accordion',
+    category: 'Data display',
+    match: 'exact',
+    spinbox: spinbox('Collapsible', 'data-display/collapsible/'),
+    legacy: legacy('Collapsible', '8247-133883'),
+    notes:
+      'Spinbox calls it Collapsible, the mapping doc labels the Spinbox side "Accordion". Agree on one name before migrating.',
+    variants: [
+      pair('Collapsed', 'Closed'),
+      pair('Expanded', 'Open'),
+      pair('With leading icon', 'With icon'),
+      pair('Disabled'),
+    ],
+  },
+  {
+    id: 'alerts-callouts',
+    title: 'Alerts / Callouts',
+    category: 'System feedback',
+    match: 'needs-review',
+    spinbox: spinbox('Callout', 'system-feedback/callout/'),
+    legacy: {
+      label: 'Callouts (spec document)',
+      url: 'https://docs.google.com/document/d/17APhv3NB53rKvTXDYQiX206jUteW_aHuDngfVukk5yY/edit?tab=t.0',
+      kind: 'google-doc',
+      note:
+        'The mapping doc points to a Google Doc instead of a Figma node, and lists the two links swapped. A Figma node for Callouts still has to be found.',
+    },
+    notes:
+      'Source rows were inverted in the mapping doc: the Spinbox row carried the Google Doc and the Legacy row carried the Spinbox URL. Resolved here to Spinbox Callout vs. the Alerts spec doc — confirm with the design team.',
+    variants: [
+      pair('Informative', 'Info'),
+      pair('Success'),
+      pair('Warning'),
+      pair('Error', 'Critical'),
+    ],
+  },
+  {
+    id: 'avatar',
+    title: 'Avatar',
+    category: 'Data display',
+    match: 'exact',
+    spinbox: spinbox('Avatar', 'data-display/avatar/?_highlight=ava'),
+    legacy: legacy('Avatar', '6306-256'),
+    variants: [
+      pair('Initials'),
+      pair('Image', 'Photo'),
+      pair('Icon'),
+      pair('Small'),
+      pair('Medium'),
+      pair('Large'),
+    ],
+  },
+  {
+    id: 'banner',
+    title: 'Banner',
+    category: 'Data display',
+    match: 'exact',
+    spinbox: spinbox('Banner', 'data-display/banner/'),
+    legacy: legacy('Banners', '6753-110818'),
+    variants: [
+      pair('Informative', 'Info'),
+      pair('Promotional', 'Promo'),
+      pair('With image'),
+      pair('Dismissible', 'With close'),
+    ],
+  },
+  {
+    id: 'button',
+    title: 'Button',
+    category: 'Buttons',
+    match: 'exact',
+    spinbox: spinbox('Button', 'buttons/button/'),
+    legacy: legacy('Buttons', '6092-18262'),
+    notes: 'Listed twice in the mapping doc (with and without the ?_highlight query). Same component.',
+    variants: [
+      pair('Primary'),
+      pair('Secondary'),
+      pair('Tertiary'),
+      pair('Destructive'),
+      pair('With leading icon', 'Icon left'),
+      pair('With trailing icon', 'Icon right'),
+      pair('Icon only'),
+      pair('Loading'),
+      pair('Disabled'),
+      pair('Full width', 'Block'),
+    ],
+  },
+  {
+    id: 'card',
+    title: 'Card',
+    category: 'Cards',
+    match: 'approximate',
+    spinbox: spinbox('BaseCard (compound component)', 'cards/basecard/'),
+    legacy: legacy('Card', '14370-4802'),
+    notes:
+      'Spinbox ships a compound component (BaseCard + slots), Legacy ships flattened card variants. Each Legacy variant has to be expressed as a BaseCard composition.',
+    variants: [
+      pair('BaseCard.Header', 'Card header'),
+      pair('BaseCard.Body', 'Card content'),
+      pair('BaseCard.Footer', 'Card footer'),
+      pair('Pressable', 'Interactive'),
+      pair('With media'),
+    ],
+  },
+  {
+    id: 'carousel-indicator',
+    title: 'Carousel indicator',
+    category: 'Navigation',
+    match: 'exact',
+    spinbox: spinbox('CarouselIndicator', 'navigation/carouselindicator/'),
+    legacy: legacy('Carousel Indicator', '6092-18195'),
+    variants: [pair('Dots'), pair('Bars'), pair('Light on dark', 'Inverse')],
+  },
+  {
+    id: 'checkbox',
+    title: 'Checkbox',
+    category: 'Controls',
+    match: 'exact',
+    spinbox: spinbox('Checkbox', 'controls/checkbox/'),
+    legacy: legacy('Checkbox', '6429-12'),
+    variants: [
+      pair('Unchecked'),
+      pair('Checked'),
+      pair('Indeterminate'),
+      pair('Disabled'),
+      pair('With label'),
+      pair('Error'),
+    ],
+  },
+  {
+    id: 'chip',
+    title: 'Chip',
+    category: 'Tagging & categorization',
+    match: 'exact',
+    spinbox: spinbox('Chip', 'tagging-categorization/chip/'),
+    legacy: legacy('Chips', '6924-113330'),
+    variants: [
+      pair('Default', 'Unselected'),
+      pair('Selected'),
+      pair('With icon'),
+      pair('Removable', 'With close'),
+      pair('Disabled'),
+    ],
+  },
+  {
+    id: 'confirmation-behaviours',
+    title: 'Confirmation behaviours',
+    category: 'Templates',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox(
+      'Not available',
+      'No component in Spinbox. The mapping doc notes this should become a template rather than a component.',
+    ),
+    legacy: legacy('Confirmation Behaviours', '4807-125280'),
+    notes: 'Decide whether this ships as a Spinbox template, a screen recipe, or documentation only.',
+  },
+  {
+    id: 'debit-card',
+    title: 'Debit card',
+    category: 'Cards',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox('Not available', 'Does not exist in Spinbox ("No existe").'),
+    legacy: legacy('Debit Card', '7026-113444'),
+  },
+  {
+    id: 'dropdown',
+    title: 'Dropdown',
+    category: 'Inputs',
+    match: 'exact',
+    spinbox: spinbox('Dropdown', 'inputs/dropdown/'),
+    legacy: legacy('Dropdown', '6652-107618'),
+    variants: [
+      pair('Default', 'Rest'),
+      pair('Focused'),
+      pair('Open', 'Expanded'),
+      pair('Filled'),
+      pair('Error'),
+      pair('Disabled'),
+    ],
+  },
+  {
+    id: 'footer',
+    title: 'Footer',
+    category: 'Navigation',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox('Not available', 'No footer component in Spinbox ("no existe footer").'),
+    legacy: legacy('Footer', '2058-788'),
+  },
+  {
+    id: 'header',
+    title: 'Header',
+    category: 'Navigation',
+    match: 'exact',
+    spinbox: spinbox('Header', 'navigation/header/?_highlight=header'),
+    legacy: legacy('Header', '6108-189'),
+    variants: [
+      pair('Title only'),
+      pair('With back navigation', 'With back'),
+      pair('With actions', 'With trailing icons'),
+      pair('Large title', 'Expanded'),
+      pair('Transparent'),
+    ],
+  },
+  {
+    id: 'icon',
+    title: 'Icon',
+    category: 'Data display',
+    match: 'exact',
+    spinbox: spinbox('Icon', 'data-display/icon/?_highlight=icons'),
+    legacy: legacy('Icon', '6019-74691'),
+    notes: 'Compare the icon inventory itself, not only the wrapper: names and sizes must line up one to one.',
+    variants: [pair('Small'), pair('Medium'), pair('Large'), pair('Outlined'), pair('Filled')],
+  },
+  {
+    id: 'text-input',
+    title: 'Text input / Input fields',
+    category: 'Inputs',
+    match: 'exact',
+    spinbox: spinbox('TextInput', 'inputs/textinput/'),
+    legacy: legacy('Input Fields (Default - General)', '6108-748'),
+    variants: [
+      pair('Default', 'Rest'),
+      pair('Focused'),
+      pair('Filled'),
+      pair('With helper text', 'With hint'),
+      pair('Error'),
+      pair('Disabled'),
+      pair('Read only'),
+      pair('With leading icon'),
+      pair('With trailing icon'),
+    ],
+  },
+  {
+    id: 'amount-input',
+    title: 'Amount input / Amounts',
+    category: 'Inputs',
+    match: 'exact',
+    spinbox: spinbox('AmountInput', 'inputs/amountinput/'),
+    legacy: legacy('Amounts', '6645-110461'),
+    variants: [
+      pair('Empty', 'Placeholder'),
+      pair('Filled'),
+      pair('Error'),
+      pair('With currency', 'With currency symbol'),
+      pair('Disabled'),
+    ],
+  },
+  {
+    id: 'token-input',
+    title: 'Token input / Passcode & OTP',
+    category: 'Inputs',
+    match: 'exact',
+    spinbox: spinbox('TokenInput', 'inputs/tokeninput/'),
+    legacy: legacy('Passcode & OTP - NIP', '6113-4225'),
+    notes: 'Legacy splits passcode, OTP and NIP; check whether one Spinbox TokenInput covers all three.',
+    variants: [
+      pair('4 digits', 'NIP'),
+      pair('6 digits', 'OTP'),
+      pair('Masked', 'Passcode'),
+      pair('Error'),
+      pair('Disabled'),
+    ],
+  },
+  {
+    id: 'text-area',
+    title: 'Text area',
+    category: 'Inputs',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox('Not available', 'No text area in Spinbox.'),
+    legacy: legacy('Text Area', '6647-110596'),
+  },
+  {
+    id: 'instructions',
+    title: 'Instructions',
+    category: 'Data display',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox('Not available', 'No instructions component in Spinbox.'),
+    legacy: legacy('Instructions', '6422-43'),
+  },
+  {
+    id: 'list-item',
+    title: 'List item / Lists',
+    category: 'Data display',
+    match: 'approximate',
+    spinbox: spinbox('ListItem', 'data-display/listitem/'),
+    legacy: legacy('Lists', '6371-0'),
+    notes: 'Spinbox exposes the item; Legacy documents whole lists. Confirm who owns dividers, grouping and spacing.',
+    variants: [
+      pair('Single line'),
+      pair('Two lines', 'With description'),
+      pair('With leading icon'),
+      pair('With trailing icon', 'With chevron'),
+      pair('With avatar'),
+      pair('With amount', 'With value'),
+      pair('Pressed'),
+      pair('Disabled'),
+    ],
+  },
+  {
+    id: 'loaders',
+    title: 'Activity loader & Skeleton / Loaders',
+    category: 'Loaders',
+    match: 'approximate',
+    spinbox: {
+      label: 'ActivityLoader + Skeleton',
+      url: `${SPINBOX_ROOT}/loaders/activityloader/`,
+      kind: 'spinbox-docs',
+      note: 'Two Spinbox components cover one Legacy page.',
+      extra: [{ label: 'Skeleton', url: `${SPINBOX_ROOT}/loaders/skeleton/` }],
+    },
+    legacy: legacy('Loaders', '8097-128541'),
+    variants: [
+      pair('ActivityLoader small', 'Spinner small'),
+      pair('ActivityLoader large', 'Spinner large'),
+      pair('Full screen loader', 'Blocking loader'),
+      pair('Skeleton text', 'Skeleton line'),
+      pair('Skeleton block', 'Skeleton card'),
+    ],
+  },
+  {
+    id: 'modal',
+    title: 'Modal',
+    category: 'Modals',
+    match: 'exact',
+    spinbox: spinbox('Modal', 'modals/modal/'),
+    legacy: legacy('Modals', '4936-68169'),
+    variants: [
+      pair('Alert', 'Dialog'),
+      pair('Bottom sheet', 'Sheet'),
+      pair('Full screen'),
+      pair('With illustration'),
+      pair('One action', 'Single button'),
+      pair('Two actions', 'Two buttons'),
+    ],
+  },
+  {
+    id: 'notifications',
+    title: 'Notifications',
+    category: 'System feedback',
+    match: 'approximate',
+    spinbox: spinbox(
+      'Snackbar (closest match)',
+      'system-feedback/snackbar/',
+      'No Notifications component in Spinbox. The mapping doc suggests Snackbar as the nearest equivalent.',
+    ),
+    legacy: legacy('Notifications', '6402-102350'),
+    notes: 'Snackbar also maps to Toast Notification, so one of the two Legacy components still needs a home.',
+  },
+  {
+    id: 'ocr',
+    title: 'OCR',
+    category: 'Templates',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox('Not available', 'Does not exist in Spinbox ("No existe").'),
+    legacy: legacy('OCR', '6402-102621'),
+  },
+  {
+    id: 'paragraphs-texts',
+    title: 'Paragraphs / Texts',
+    category: 'Typography',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox(
+      'Not available',
+      'No Paragraphs/Texts component in Spinbox ("No existe"). Typography may be covered by tokens instead.',
+    ),
+    legacy: legacy('Paragraphs / Texts', '2585-30857'),
+  },
+  {
+    id: 'progress-bar',
+    title: 'Progress bar',
+    category: 'System feedback',
+    match: 'exact',
+    spinbox: spinbox('ProgressBar', 'system-feedback/progressbar/'),
+    legacy: legacy('Progress Bar', '6706-111076'),
+    variants: [pair('Determinate'), pair('Indeterminate'), pair('With label'), pair('Steps', 'Segmented')],
+  },
+  {
+    id: 'punch-card',
+    title: 'Punch card / Vertical card',
+    category: 'Cards',
+    match: 'approximate',
+    spinbox: spinbox(
+      'VerticalCard (closest match)',
+      'cards/verticalcard/',
+      'No Punch Card in Spinbox. The mapping doc points to VerticalCard as the closest existing component.',
+    ),
+    legacy: legacy('Punch Card', '16474-8530'),
+  },
+  {
+    id: 'radio-button',
+    title: 'Radio button',
+    category: 'Controls',
+    match: 'exact',
+    spinbox: spinbox('RadioButton', 'controls/radiobutton/'),
+    legacy: legacy('Radio Buttons', '5677-154'),
+    variants: [pair('Unselected'), pair('Selected'), pair('Disabled'), pair('With label'), pair('Error')],
+  },
+  {
+    id: 'search-bar',
+    title: 'Search bar',
+    category: 'Inputs',
+    match: 'approximate',
+    spinbox: spinbox(
+      'TextInput (used as search)',
+      'inputs/textinput',
+      'Spinbox has no dedicated search bar; the mapping doc reuses TextInput.',
+    ),
+    legacy: legacy('Search Bar', '6120-634'),
+    notes: 'Decide whether Spinbox needs a real SearchBar or a documented TextInput recipe.',
+    variants: [
+      pair('Empty', 'Placeholder'),
+      pair('Typing', 'Active'),
+      pair('With results', 'Filled'),
+      pair('With cancel', 'With clear'),
+    ],
+  },
+  {
+    id: 'stepper',
+    title: 'Stepper / Vertical stepper timeline',
+    category: 'System feedback',
+    match: 'approximate',
+    spinbox: spinbox('Stepper', 'system-feedback/stepper/'),
+    legacy: legacy('Vertical Stepper Timeline', '6232-99078'),
+    notes: 'Check orientation support: Legacy documents a vertical timeline explicitly.',
+    variants: [
+      pair('Horizontal'),
+      pair('Vertical'),
+      pair('Completed step'),
+      pair('Current step', 'Active step'),
+      pair('Upcoming step', 'Inactive step'),
+    ],
+  },
+  {
+    id: 'tabs',
+    title: 'Tab controller / Tabs',
+    category: 'Navigation',
+    match: 'exact',
+    spinbox: spinbox('TabController', 'navigation/tabcontroller/'),
+    legacy: legacy('Tabs', '6920-114064'),
+    variants: [
+      pair('Fixed', 'Full width'),
+      pair('Scrollable'),
+      pair('With icons'),
+      pair('With badge', 'With counter'),
+      pair('Selected'),
+      pair('Disabled'),
+    ],
+  },
+  {
+    id: 'tag',
+    title: 'Tag',
+    category: 'Tagging & categorization',
+    match: 'exact',
+    spinbox: spinbox('Tag', 'tagging-categorization/tag/'),
+    legacy: legacy('Tags', '6924-113075'),
+    variants: [pair('Neutral', 'Default'), pair('Success'), pair('Warning'), pair('Error'), pair('With icon')],
+  },
+  {
+    id: 'tables',
+    title: 'Tables',
+    category: 'Data display',
+    match: 'missing-spinbox',
+    spinbox: noSpinbox('Not available', 'No tables in Spinbox ("No hay tables").'),
+    legacy: legacy('Tables', '6236-100570'),
+  },
+  {
+    id: 'snackbar-toast',
+    title: 'Snackbar / Toast notification',
+    category: 'System feedback',
+    match: 'exact',
+    spinbox: spinbox('Snackbar', 'system-feedback/snackbar/'),
+    legacy: legacy('Toast Notification', '6113-4682'),
+    notes: 'Same Spinbox component is also proposed for Legacy Notifications — resolve the double mapping.',
+    variants: [
+      pair('Informative', 'Info'),
+      pair('Success'),
+      pair('Error'),
+      pair('With action'),
+      pair('With icon'),
+    ],
+  },
+  {
+    id: 'switch-toggle',
+    title: 'Switch / Toggle',
+    category: 'Controls',
+    match: 'exact',
+    spinbox: spinbox('Switch', 'controls/switch/'),
+    legacy: legacy('Toggle', '6236-98901'),
+    variants: [pair('Off', 'Inactive'), pair('On', 'Active'), pair('Disabled'), pair('With label')],
+  },
+  {
+    id: 'tooltip',
+    title: 'Tooltip',
+    category: 'Modals',
+    match: 'exact',
+    spinbox: spinbox('Tooltip', 'modals/tooltip/'),
+    legacy: legacy('Tooltip', '6226-566'),
+    variants: [pair('Top'), pair('Bottom'), pair('Left'), pair('Right'), pair('With arrow'), pair('Dark')],
+  },
+]
+
+const components: ComponentMapping[] = drafts.map((draft) => ({
+  id: draft.id,
+  title: draft.title,
+  category: draft.category,
+  match: draft.match,
+  spinbox: draft.spinbox,
+  legacy: draft.legacy,
+  notes: draft.notes ?? '',
+  variants: (draft.variants ?? []).map((variant, index) => ({
+    ...variant,
+    id: `${draft.id}-v${index + 1}`,
+  })),
+}))
+
+export const SEED_DATASET: MappingDataset = {
+  revision: 1,
+  updatedAt: '2026-08-25',
+  components,
+}
+
+export const SEED_SOURCE_DOC = 'Spin box - Mapping (PDF, 8 pages)'
