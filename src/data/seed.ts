@@ -503,7 +503,7 @@ const drafts: Draft[] = [
     ],
   },
     {
-    id: 'segmented-controller',
+    id: 'segmented-controller-tabs',
     title: 'Segmented Controller / Tabs',
     category: 'Navigation',
     match: 'needs-review',
