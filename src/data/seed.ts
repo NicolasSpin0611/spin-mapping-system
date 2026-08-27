@@ -115,7 +115,7 @@ const drafts: Draft[] = [
   },
   {
     id: 'card',
-    title: 'Card',
+    title: 'Card (Custom Component from Spinbox Legacy)',
     category: 'Cards',
     match: 'approximate',
     spinbox: spinbox('BaseCard (compound component)', 'cards/basecard/'),
