@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Code2, Info } from 'lucide-react'
 import { toast } from 'sonner'
-import { AuditPanel } from '@/components/audit-panel'
-import { EmbedPanel } from '@/components/embed-panel'
+/* import { AuditPanel } from '@/components/audit-panel'
+ */import { EmbedPanel } from '@/components/embed-panel'
 import { MatchBadge, RiskBadge, WarnBadge } from '@/components/status-badge'
 import { PropChecklist } from '@/components/prop-checklist'
 import { VariantChecklist } from '@/components/variant-checklist'
@@ -126,8 +126,8 @@ export function ComparisonView({ component, onPrevious, onNext, position }: Comp
         </div>
       </header>
 
-      <AuditPanel component={component} />
-
+{/*       <AuditPanel component={component} />
+ */}
       {component.notes ? (
         <div className="bg-muted/50 text-muted-foreground flex gap-2 rounded-lg border px-3 py-2 text-sm">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
