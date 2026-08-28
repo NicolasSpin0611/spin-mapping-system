@@ -10,29 +10,16 @@ import { EmptyPanel } from '@/components/embed-panel'
 import { ConfidenceBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Progress } from '@/components/ui/progress'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { CONFIDENCE_NEEDS_REVIEW, NA, VARIANT_STATUS_LABEL } from '@/data/types'
-import type { ComponentMapping, PropMapping, VariantStatus } from '@/data/types'
+import { CONFIDENCE_NEEDS_REVIEW, NA } from '@/data/types'
+import type { ComponentMapping, PropMapping } from '@/data/types'
 import { useMapping } from '@/store/mapping-store'
 import { cn } from '@/lib/utils'
 
-const STATUSES = Object.keys(VARIANT_STATUS_LABEL) as VariantStatus[]
-
 const GRID =
-  'lg:grid-cols-[1.75rem_minmax(7.5rem,1.1fr)_minmax(7.5rem,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(7.5rem,auto)_minmax(9.5rem,10.5rem)_1.75rem]'
+  'lg:grid-cols-[1.75rem_minmax(7.5rem,1.1fr)_minmax(7.5rem,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(7.5rem,auto)_1.75rem]'
 
 export function PropChecklist({ component }: { component: ComponentMapping }) {
   const { addPropMapping, updatePropMapping, removePropMapping } = useMapping()
-  const counted = component.propMappings.filter((mapping) => mapping.status !== 'not-needed')
-  const done = counted.filter((mapping) => mapping.status === 'done').length
-  const percent = counted.length === 0 ? 0 : Math.round((done / counted.length) * 100)
 
   const filter = useChecklistFilter(component.propMappings, (row) =>
     [row.spinboxProp, row.legacyProp, row.spinboxType, row.legacyType, row.notes, row.reviewReason]
@@ -53,18 +40,10 @@ export function PropChecklist({ component }: { component: ComponentMapping }) {
             lo que los JSON no describen aparece como <span className="font-mono">{NA}</span>.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-32">
-            <Progress value={percent} />
-          </div>
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {done}/{counted.length} done
-          </span>
-          <Button size="sm" variant="outline" onClick={() => addPropMapping(component.id)}>
-            <Plus aria-hidden />
-            Add prop
-          </Button>
-        </div>
+        <Button size="sm" variant="outline" onClick={() => addPropMapping(component.id)}>
+          <Plus aria-hidden />
+          Add prop
+        </Button>
       </header>
 
       {component.propMappings.length === 0 ? (
@@ -95,7 +74,7 @@ export function PropChecklist({ component }: { component: ComponentMapping }) {
             <div className="divide-y overflow-x-auto">
               <div
                 className={cn(
-                  'text-muted-foreground hidden min-w-[56rem] items-center gap-3 px-4 py-2 text-xs font-medium lg:grid',
+                  'text-muted-foreground hidden min-w-[48rem] items-center gap-3 px-4 py-2 text-xs font-medium lg:grid',
                   GRID,
                 )}
               >
@@ -105,7 +84,6 @@ export function PropChecklist({ component }: { component: ComponentMapping }) {
                 <span>Spinbox type</span>
                 <span>Legacy type</span>
                 <span>Evidencia</span>
-                <span>Status</span>
                 <span aria-hidden className="size-6" />
               </div>
 
@@ -145,7 +123,7 @@ function PropRow({ mapping, expanded, onToggle, onUpdate, onRemove }: PropRowPro
     <div className={cn(flagged && confidence === 'conflict' && 'bg-rose-50/40 dark:bg-rose-950/10')}>
       <div
         className={cn(
-          'hover:bg-muted/40 grid min-w-[56rem] gap-2 px-4 py-2.5 transition-colors lg:items-center lg:gap-3',
+          'hover:bg-muted/40 grid min-w-[48rem] gap-2 px-4 py-2.5 transition-colors lg:items-center lg:gap-3',
           GRID,
         )}
       >
@@ -193,22 +171,6 @@ function PropRow({ mapping, expanded, onToggle, onUpdate, onRemove }: PropRowPro
         <div className="flex min-w-0 items-center overflow-hidden">
           <ConfidenceBadge confidence={confidence} />
         </div>
-
-        <label className="grid min-w-0 gap-1">
-          <span className="text-muted-foreground text-xs lg:hidden">Status</span>
-          <Select value={mapping.status} onValueChange={(value) => onUpdate({ status: value as VariantStatus })}>
-            <SelectTrigger className="h-8 w-full min-w-0 overflow-hidden text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {VARIANT_STATUS_LABEL[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
 
         <div className="flex justify-end gap-1">
           <button

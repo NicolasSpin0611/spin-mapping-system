@@ -10,29 +10,16 @@ import { ConfidenceBadge } from '@/components/status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Progress } from '@/components/ui/progress'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { CONFIDENCE_NEEDS_REVIEW, NA, VARIANT_STATUS_LABEL } from '@/data/types'
-import type { ComponentMapping, VariantMapping, VariantStatus } from '@/data/types'
+import { CONFIDENCE_NEEDS_REVIEW, NA } from '@/data/types'
+import type { ComponentMapping, VariantMapping } from '@/data/types'
 import { useMapping } from '@/store/mapping-store'
 import { cn } from '@/lib/utils'
 
-const STATUSES = Object.keys(VARIANT_STATUS_LABEL) as VariantStatus[]
-
 const GRID =
-  'md:grid-cols-[1.75rem_minmax(5.5rem,7rem)_minmax(8rem,1fr)_minmax(8rem,1fr)_minmax(7.5rem,auto)_minmax(9.5rem,10.5rem)_1.75rem]'
+  'md:grid-cols-[1.75rem_minmax(5.5rem,7rem)_minmax(8rem,1fr)_minmax(8rem,1fr)_minmax(7.5rem,auto)_1.75rem]'
 
 export function VariantChecklist({ component }: { component: ComponentMapping }) {
   const { addVariant, updateVariant, removeVariant } = useMapping()
-  const counted = component.variants.filter((variant) => variant.status !== 'not-needed')
-  const done = counted.filter((variant) => variant.status === 'done').length
-  const percent = counted.length === 0 ? 0 : Math.round((done / counted.length) * 100)
 
   const filter = useChecklistFilter(component.variants, (row) =>
     [row.spinboxName, row.legacyName, row.axis, row.notes, row.reviewReason].filter(Boolean).join(' '),
@@ -63,18 +50,10 @@ export function VariantChecklist({ component }: { component: ComponentMapping })
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-32">
-            <Progress value={percent} />
-          </div>
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {done}/{counted.length} done
-          </span>
-          <Button size="sm" variant="outline" onClick={() => addVariant(component.id)}>
-            <Plus aria-hidden />
-            Add variant
-          </Button>
-        </div>
+        <Button size="sm" variant="outline" onClick={() => addVariant(component.id)}>
+          <Plus aria-hidden />
+          Add variant
+        </Button>
       </header>
 
       {component.variants.length === 0 ? (
@@ -105,7 +84,7 @@ export function VariantChecklist({ component }: { component: ComponentMapping })
             <div className="divide-y overflow-x-auto">
               <div
                 className={cn(
-                  'text-muted-foreground hidden min-w-[48rem] items-center gap-3 px-4 py-2 text-xs font-medium md:grid',
+                  'text-muted-foreground hidden min-w-[40rem] items-center gap-3 px-4 py-2 text-xs font-medium md:grid',
                   GRID,
                 )}
               >
@@ -114,7 +93,6 @@ export function VariantChecklist({ component }: { component: ComponentMapping })
                 <span>Spinbox</span>
                 <span>Spin Legacy</span>
                 <span>Evidencia</span>
-                <span>Status</span>
                 <span aria-hidden className="size-6" />
               </div>
 
@@ -152,7 +130,7 @@ function VariantRow({ variant, expanded, onToggle, onUpdate, onRemove }: Variant
     <div className={cn(flagged && confidence === 'conflict' && 'bg-rose-50/40 dark:bg-rose-950/10')}>
       <div
         className={cn(
-          'hover:bg-muted/40 grid min-w-[48rem] gap-2 px-4 py-2.5 transition-colors md:items-center md:gap-3',
+          'hover:bg-muted/40 grid min-w-[40rem] gap-2 px-4 py-2.5 transition-colors md:items-center md:gap-3',
           GRID,
         )}
       >
@@ -206,22 +184,6 @@ function VariantRow({ variant, expanded, onToggle, onUpdate, onRemove }: Variant
         <div className="flex min-w-0 items-center overflow-hidden">
           <ConfidenceBadge confidence={confidence} />
         </div>
-
-        <label className="grid min-w-0 gap-1">
-          <span className="text-muted-foreground text-xs md:hidden">Status</span>
-          <Select value={variant.status} onValueChange={(value) => onUpdate({ status: value as VariantStatus })}>
-            <SelectTrigger className="h-8 w-full min-w-0 overflow-hidden text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {VARIANT_STATUS_LABEL[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
 
         <div className="flex justify-end gap-1">
           <button
