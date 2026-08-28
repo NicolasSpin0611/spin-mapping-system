@@ -1,23 +1,40 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SEED_DATASET } from '@/data/seed'
-import type { ComponentMapping, MappingDataset, VariantMapping } from '@/data/types'
+import type { ComponentMapping, MappingDataset, PropMapping, VariantMapping } from '@/data/types'
 
 const STORAGE_KEY = 'spin-mapping:dataset:v1'
 
 function isDataset(value: unknown): value is MappingDataset {
   if (!value || typeof value !== 'object') return false
   const candidate = value as Partial<MappingDataset>
-  return Array.isArray(candidate.components) && typeof candidate.revision === 'number'
+  return (
+    Array.isArray(candidate.components) &&
+    typeof candidate.revision === 'number' &&
+    candidate.components.every(
+      (component) =>
+        Array.isArray((component as ComponentMapping).variants) &&
+        Array.isArray((component as ComponentMapping).propMappings),
+    )
+  )
 }
 
+/**
+ * Local edits are dropped when the committed seed moves ahead of them: a seed bump
+ * means the mapping itself was corrected, and keeping the old copy would hide it.
+ */
 function readStored(): MappingDataset | null {
   if (typeof localStorage === 'undefined') return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed: unknown = JSON.parse(raw)
-    return isDataset(parsed) ? parsed : null
+    if (!isDataset(parsed)) return null
+    if (parsed.revision < SEED_DATASET.revision) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return parsed
   } catch {
     return null
   }
@@ -38,6 +55,9 @@ export interface MappingStore {
   addVariant: (componentId: string) => void
   updateVariant: (componentId: string, variantId: string, patch: Partial<VariantMapping>) => void
   removeVariant: (componentId: string, variantId: string) => void
+  addPropMapping: (componentId: string) => void
+  updatePropMapping: (componentId: string, propId: string, patch: Partial<PropMapping>) => void
+  removePropMapping: (componentId: string, propId: string) => void
   importDataset: (dataset: MappingDataset) => void
   resetToSeed: () => void
 }
@@ -96,6 +116,7 @@ export function MappingProvider({ children }: { children: ReactNode }) {
             legacy: { label: '', url: null, kind: 'none', note: '' },
             notes: '',
             variants: [],
+            propMappings: [],
           })
         })
         return id
@@ -122,6 +143,25 @@ export function MappingProvider({ children }: { children: ReactNode }) {
       removeVariant: (componentId, variantId) =>
         mutateComponent(componentId, (component) => {
           component.variants = component.variants.filter((variant) => variant.id !== variantId)
+        }),
+      addPropMapping: (componentId) =>
+        mutateComponent(componentId, (component) => {
+          component.propMappings.push({
+            id: `${componentId}-p${Date.now().toString(36)}`,
+            spinboxProp: '',
+            legacyProp: '',
+            status: 'pending',
+            notes: '',
+          })
+        }),
+      updatePropMapping: (componentId, propId, patch) =>
+        mutateComponent(componentId, (component) => {
+          const mapping = component.propMappings.find((item) => item.id === propId)
+          if (mapping) Object.assign(mapping, patch, patch.suggested === undefined ? { suggested: false } : {})
+        }),
+      removePropMapping: (componentId, propId) =>
+        mutateComponent(componentId, (component) => {
+          component.propMappings = component.propMappings.filter((mapping) => mapping.id !== propId)
         }),
       importDataset: (incoming) => {
         setHasLocalEdits(true)
@@ -158,13 +198,20 @@ export interface Coverage {
   variants: number
   variantsDone: number
   variantsPending: number
+  propMappings: number
+  propMappingsDone: number
   percentDone: number
 }
 
 export function coverageOf(components: ComponentMapping[]): Coverage {
   const variants = components.flatMap((component) => component.variants)
-  const done = variants.filter((variant) => variant.status === 'done').length
-  const counted = variants.filter((variant) => variant.status !== 'not-needed').length
+  const propMappings = components.flatMap((component) => component.propMappings)
+  const variantsDone = variants.filter((variant) => variant.status === 'done').length
+  const propsDone = propMappings.filter((mapping) => mapping.status === 'done').length
+  const variantsCounted = variants.filter((variant) => variant.status !== 'not-needed').length
+  const propsCounted = propMappings.filter((mapping) => mapping.status !== 'not-needed').length
+  const totalCounted = variantsCounted + propsCounted
+  const totalDone = variantsDone + propsDone
 
   return {
     components: components.length,
@@ -175,8 +222,10 @@ export function coverageOf(components: ComponentMapping[]): Coverage {
     missingLegacy: components.filter((component) => component.match === 'missing-legacy').length,
     needsReview: components.filter((component) => component.match === 'needs-review').length,
     variants: variants.length,
-    variantsDone: done,
+    variantsDone,
     variantsPending: variants.filter((variant) => variant.status === 'pending').length,
-    percentDone: counted === 0 ? 0 : Math.round((done / counted) * 100),
+    propMappings: propMappings.length,
+    propMappingsDone: propsDone,
+    percentDone: totalCounted === 0 ? 0 : Math.round((totalDone / totalCounted) * 100),
   }
 }

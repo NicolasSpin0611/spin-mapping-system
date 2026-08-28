@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { PanelsTopLeft } from 'lucide-react'
-import { ComparisonEmptyState, ComparisonView } from '@/components/comparison-view'
+import { ComparisonView } from '@/components/comparison-view'
 import { ComponentList } from '@/components/component-list'
-/* import { CoverageSummary } from '@/components/coverage-summary'
- */import { Button } from '@/components/ui/button'
+import { PriorityDashboard } from '@/components/priority-dashboard'
+import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useMapping } from '@/store/mapping-store'
 
@@ -47,7 +47,7 @@ export function ComparePage({ componentId, onSelect }: ComparePageProps) {
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full">
                 <PanelsTopLeft aria-hidden />
-                {selected ? selected.title : 'Browse the 37 components'}
+                {selected ? selected.title : `Browse the ${components.length} components`}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[85vh] overflow-hidden">
@@ -72,9 +72,7 @@ export function ComparePage({ componentId, onSelect }: ComparePageProps) {
             onNext={index < components.length - 1 ? () => onSelect(components[index + 1].id) : undefined}
           />
         ) : (
-          <div className="space-y-4">
-            <ComparisonEmptyState onPick={() => components[0] && onSelect(components[0].id)} />
-          </div>
+          <PriorityDashboard components={components} onSelect={select} />
         )}
       </div>
     </div>

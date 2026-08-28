@@ -50,7 +50,8 @@ function inferKind(url: string): SourceKind {
 }
 
 export function AdminPage({ onOpenComponent }: { onOpenComponent: (id: string) => void }) {
-  const { dataset, hasLocalEdits, addComponent, removeComponent, importDataset, resetToSeed } = useMapping()
+  const { dataset, hasLocalEdits, seedRevision, addComponent, removeComponent, importDataset, resetToSeed } =
+    useMapping()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [importText, setImportText] = useState('')
@@ -73,7 +74,12 @@ export function AdminPage({ onOpenComponent }: { onOpenComponent: (id: string) =
     try {
       const parsed = JSON.parse(raw) as MappingDataset
       if (!Array.isArray(parsed.components)) throw new Error('missing components array')
-      importDataset({ revision: parsed.revision ?? 1, updatedAt: parsed.updatedAt ?? '', components: parsed.components })
+      // Imports must not fall behind the seed, or they get discarded on the next reload.
+      importDataset({
+        revision: Math.max(parsed.revision ?? 0, seedRevision),
+        updatedAt: parsed.updatedAt ?? '',
+        components: parsed.components,
+      })
       setImportOpen(false)
       setImportText('')
       toast.success(`Imported ${parsed.components.length} components`)

@@ -1,36 +1,62 @@
-import { GitCompareArrows, Settings2 } from 'lucide-react'
+import { GitCompareArrows, LayoutDashboard, Settings2 } from 'lucide-react'
 import { AdminPage } from '@/pages/admin-page'
 import { ComparePage } from '@/pages/compare-page'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { useRoute } from '@/lib/router'
-import { MappingProvider } from '@/store/mapping-store'
+import { MappingProvider, useMapping } from '@/store/mapping-store'
+import { buildPriorityOverview } from '@/lib/priority'
 import { cn } from '@/lib/utils'
 
 function Shell() {
   const { route, navigate } = useRoute()
+  const { dataset } = useMapping()
+
+  const openComparison = () => {
+    if (route.name === 'compare' && route.componentId) {
+      navigate({ name: 'compare', componentId: route.componentId })
+      return
+    }
+    const overview = buildPriorityOverview(dataset.components)
+    const first = overview.startHere[0]?.component.id ?? dataset.components[0]?.id ?? null
+    navigate({ name: 'compare', componentId: first })
+  }
 
   return (
     <div className="bg-background text-foreground min-h-screen">
       <header className="bg-background/85 sticky top-0 z-40 border-b backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
-              <GitCompareArrows className="size-5" aria-hidden />
-            </span>
-            <div>
-              <p className="text-sm leading-tight font-semibold">Spinbox ↔ Spin Legacy</p>
-              <p className="text-muted-foreground text-xs leading-tight">
-                Component parity workspace for the design-system migration
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate({ name: 'compare', componentId: null })}
+              className="flex items-center gap-3 text-left"
+            >
+              <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
+                <GitCompareArrows className="size-5" aria-hidden />
+              </span>
+              <span>
+                <span className="block text-sm leading-tight font-semibold">Spinbox ↔ Spin Legacy</span>
+                <span className="text-muted-foreground block text-xs leading-tight">
+                  Component parity workspace for the design-system migration
+                </span>
+              </span>
+            </button>
           </div>
 
           <nav className="flex items-center gap-1">
             <Button
-              variant={route.name === 'compare' ? 'secondary' : 'ghost'}
+              variant={route.name === 'compare' && !route.componentId ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => navigate({ name: 'compare', componentId: null })}
+            >
+              <LayoutDashboard aria-hidden />
+              Dashboard
+            </Button>
+            <Button
+              variant={route.name === 'compare' && Boolean(route.componentId) ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={openComparison}
             >
               <GitCompareArrows aria-hidden />
               Comparison

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Search, SearchX } from 'lucide-react'
+import { Search, SearchX, TriangleAlert } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,14 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MATCH_STATUS_LABEL } from '@/data/types'
+import { RiskBadge } from '@/components/status-badge'
+import { MATCH_STATUS_LABEL, riskCount } from '@/data/types'
 import type { ComponentMapping, MatchStatus } from '@/data/types'
 import { cn } from '@/lib/utils'
 
-type Filter = 'all' | MatchStatus | 'unfinished'
+type Filter = 'all' | MatchStatus | 'unfinished' | 'needs-attention' | 'no-variants'
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All components' },
+  { value: 'needs-attention', label: '⚠ Necesita revisión' },
+  { value: 'no-variants', label: 'Sin variantes en los JSON' },
   { value: 'unfinished', label: 'With pending variants' },
   ...(Object.keys(MATCH_STATUS_LABEL) as MatchStatus[]).map((status) => ({
     value: status as Filter,
@@ -27,6 +30,8 @@ const FILTERS: { value: Filter; label: string }[] = [
 
 function matchesFilter(component: ComponentMapping, filter: Filter): boolean {
   if (filter === 'all') return true
+  if (filter === 'needs-attention') return riskCount(component) > 0
+  if (filter === 'no-variants') return component.variants.length === 0
   if (filter === 'unfinished') {
     return (
       component.variants.length === 0 ||
@@ -57,6 +62,8 @@ export function ComponentList({ components, selectedId, onSelect, className }: C
         component.category,
         component.spinbox.label,
         component.legacy.label,
+        component.audit?.spinboxComponent ?? '',
+        component.audit?.legacyComponent ?? '',
         ...component.variants.flatMap((variant) => [variant.spinboxName, variant.legacyName]),
       ]
         .join(' ')
@@ -74,6 +81,7 @@ export function ComponentList({ components, selectedId, onSelect, className }: C
   }, [components, filter, query])
 
   const total = groups.reduce((sum, [, items]) => sum + items.length, 0)
+  const attention = useMemo(() => components.filter((component) => riskCount(component) > 0).length, [components])
 
   return (
     <div className={cn('flex min-h-0 flex-col gap-3', className)}>
@@ -100,8 +108,20 @@ export function ComponentList({ components, selectedId, onSelect, className }: C
             ))}
           </SelectContent>
         </Select>
-        <p className="text-muted-foreground text-xs">
-          {total} of {components.length} components
+        <p className="text-muted-foreground flex items-center gap-2 text-xs">
+          <span>
+            {total} of {components.length} components
+          </span>
+          {attention > 0 ? (
+            <button
+              type="button"
+              onClick={() => setFilter(filter === 'needs-attention' ? 'all' : 'needs-attention')}
+              className="inline-flex items-center gap-1 text-rose-700 hover:underline dark:text-rose-400"
+            >
+              <TriangleAlert className="size-3" aria-hidden />
+              {attention} por revisar
+            </button>
+          ) : null}
         </p>
       </div>
 
@@ -131,8 +151,9 @@ export function ComponentList({ components, selectedId, onSelect, className }: C
                 </p>
                 <ul className="space-y-1">
                   {items.map((component) => {
-                    const pending = component.variants.filter((variant) => variant.status === 'pending').length
                     const isSelected = component.id === selectedId
+                    const risks = riskCount(component)
+                    const audit = component.audit
                     return (
                       <li key={component.id}>
                         <button
@@ -142,21 +163,24 @@ export function ComponentList({ components, selectedId, onSelect, className }: C
                           className={cn(
                             'hover:bg-muted flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors',
                             isSelected && 'bg-primary/10 hover:bg-primary/10 ring-primary/30 ring-1',
+                            risks > 0 && !isSelected && 'border-l-2 border-l-rose-400 dark:border-l-rose-600',
                           )}
                         >
                           <span className="flex min-w-0 flex-1 flex-col">
                             <span className="truncate text-sm font-medium">{component.title}</span>
                             <span className="text-muted-foreground truncate text-xs">
-                              {component.spinbox.url ? component.spinbox.label : 'Not in Spinbox'} ·{' '}
-                              {component.legacy.label || 'No legacy link'}
+                              {audit?.spinboxComponent ?? 'Sin JSON Spinbox'} ·{' '}
+                              {audit?.legacyComponent ?? 'Sin JSON Legacy'}
                             </span>
                           </span>
                           <span className="flex shrink-0 items-center gap-1">
-                            <StatusDot ok={Boolean(component.spinbox.url)} title="Spinbox reference" />
-                            <StatusDot ok={component.legacy.kind === 'figma'} title="Figma reference" />
-                            {pending > 0 ? (
-                              <Badge variant="outline" className="tabular-nums">
-                                {pending}
+                            <StatusDot ok={Boolean(audit?.spinboxComponent)} title="Declarado en el JSON de Spinbox" />
+                            <StatusDot ok={Boolean(audit?.legacyComponent)} title="Declarado en el JSON de parity" />
+                            {risks > 0 ? (
+                              <RiskBadge count={risks} />
+                            ) : audit && audit.parity > 0 ? (
+                              <Badge variant="outline" className="tabular-nums" title="Paridad respaldada por los JSON">
+                                {audit.parity}%
                               </Badge>
                             ) : null}
                           </span>
@@ -177,7 +201,7 @@ export function ComponentList({ components, selectedId, onSelect, className }: C
 function StatusDot({ ok, title }: { ok: boolean; title: string }) {
   return (
     <span
-      title={`${title}: ${ok ? 'linked' : 'missing'}`}
+      title={`${title}: ${ok ? 'sí' : 'no'}`}
       className={cn('size-1.5 rounded-full', ok ? 'bg-emerald-500' : 'bg-muted-foreground/30')}
     />
   )

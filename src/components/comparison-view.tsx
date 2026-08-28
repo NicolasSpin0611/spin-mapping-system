@@ -1,9 +1,11 @@
-import { ChevronLeft, ChevronRight, Code2, Info, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Code2, Info } from 'lucide-react'
 import { toast } from 'sonner'
-import { EmbedPanel, EmptyPanel } from '@/components/embed-panel'
-import { MatchBadge } from '@/components/status-badge'
-/* import { VariantChecklist } from '@/components/variant-checklist'
- */import { Badge } from '@/components/ui/badge'
+import { AuditPanel } from '@/components/audit-panel'
+import { EmbedPanel } from '@/components/embed-panel'
+import { MatchBadge, RiskBadge, WarnBadge } from '@/components/status-badge'
+import { PropChecklist } from '@/components/prop-checklist'
+import { VariantChecklist } from '@/components/variant-checklist'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -44,6 +46,8 @@ export function ComparisonView({ component, onPrevious, onNext, position }: Comp
   const [mode, setMode] = useState<ViewMode>('both')
   const spinboxSnippet = iframeSnippet(component.spinbox, component.title)
   const legacySnippet = iframeSnippet(component.legacy, component.title)
+  const risks = component.audit?.issues.filter((issue) => issue.level === 'risk').length ?? 0
+  const warnings = component.audit?.issues.filter((issue) => issue.level === 'warn').length ?? 0
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -53,6 +57,8 @@ export function ComparisonView({ component, onPrevious, onNext, position }: Comp
             <h1 className="text-xl font-semibold tracking-tight">{component.title}</h1>
             <MatchBadge status={component.match} />
             <Badge variant="outline">{component.category}</Badge>
+            <RiskBadge count={risks} />
+            <WarnBadge count={warnings} />
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
             Spinbox <span className="text-foreground font-medium">{component.spinbox.label || '—'}</span> vs. Spin
@@ -120,6 +126,8 @@ export function ComparisonView({ component, onPrevious, onNext, position }: Comp
         </div>
       </header>
 
+      <AuditPanel component={component} />
+
       {component.notes ? (
         <div className="bg-muted/50 text-muted-foreground flex gap-2 rounded-lg border px-3 py-2 text-sm">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -153,25 +161,9 @@ export function ComparisonView({ component, onPrevious, onNext, position }: Comp
         </div>
       ) : null}
 
-{/*       <VariantChecklist component={component} />
- */}    </div>
-  )
-}
+      <PropChecklist component={component} />
 
-export function ComparisonEmptyState({ onPick }: { onPick: () => void }) {
-  return (
-    <div className="bg-card rounded-xl border shadow-sm">
-      <EmptyPanel
-        Icon={Sparkles}
-        title="Pick a component to start comparing"
-        description="Every row of the mapping document is here. Choosing one loads the live Spinbox documentation on the left and the Spin Legacy Figma frame on the right."
-        hint="Tip: use the filters to jump straight to the components that only exist in one of the two systems."
-        action={
-          <Button size="sm" onClick={onPick}>
-            Open the first component
-          </Button>
-        }
-      />
+      <VariantChecklist component={component} />
     </div>
   )
 }
